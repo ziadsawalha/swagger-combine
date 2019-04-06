@@ -671,6 +671,27 @@ To retrieve Swagger schemas that are access protected, basic auth information (u
 For all possible resolve options have a look at the [documentation of json-schema-ref-parser](https://github.com/BigstickCarpet/json-schema-ref-parser/blob/master/docs/options.md#resolve-options).
 
 
+### Run Commands Before Parsing
+
+If you need to run a command to preparse or generate your Swagger file before it is parsed, use
+the `runBefore` key.
+
+```json
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Swagger Combine Filter Example",
+    "version": "1.0.0"
+  },
+  "apis": [
+    {
+      "url": "./swagger.yaml",
+      "runBefore": "bin/generate swagger.yaml"
+    }
+  ]
+}
+```
+
 ## API
 
 ### swaggerCombine(config, [options], [callback])

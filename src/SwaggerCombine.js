@@ -1,4 +1,6 @@
 const $RefParser = require('json-schema-ref-parser');
+const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
 const SwaggerParser = require('swagger-parser');
 const traverse = require('traverse');
 const urlJoin = require('url-join');
@@ -54,6 +56,15 @@ class SwaggerCombine {
               api.resolved = api.url;
             }
 
+            if (!this.opts.skipBeforeRun && api.runBefore && api.runBefore.length > 0) {
+              console.log("Executing", api.runBefore);
+              try {
+                execSync(api.runBefore);
+              }
+              catch (error) {
+                console.error(error.stderr.toString());
+              }
+            }
             const opts = _.cloneDeep(this.opts);
             opts.resolve = Object.assign({}, opts.resolve, api.resolve);
 
@@ -92,6 +103,25 @@ class SwaggerCombine {
 
   matchInArray(string, expressions) {
     return expressions.filter(obj => new RegExp(obj).test(string)).length != 0;
+  }
+
+  runBefore() {
+    this.schemas = this.schemas.map((schema, idx) => {
+      if (!opts.skipBeforeRun && this.apis[idx].runBefore && this.apis[idx].runBefore.length > 0) {
+        console.log("Executing", this.apis[idx].runBefore);
+        exec(this.apis[idx].runBefore, (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Error: ${error}`);
+            return;
+          }
+          // console.log(`stdout: ${stdout}`);
+          // console.log(`stderr: ${stderr}`);
+        });
+      }
+      return schema;
+    });
+
+    return this;
   }
 
   filterPaths() {
