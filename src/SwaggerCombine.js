@@ -2,6 +2,7 @@ const $RefParser = require('json-schema-ref-parser');
 const SwaggerParser = require('swagger-parser');
 const traverse = require('traverse');
 const urlJoin = require('url-join');
+const url = require('./url');
 const _ = require('lodash');
 
 const operationTypes = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch'];
@@ -47,6 +48,12 @@ class SwaggerCombine {
 
         return Promise.all(
           this.apis.map((api, idx) => {
+            if (url.isFileSystemPath(api.url)) {
+              api.resolved = url.resolveRelativePath(this.config, api.url);
+            } else {
+              api.resolved = api.url;
+            }
+
             const opts = _.cloneDeep(this.opts);
             opts.resolve = Object.assign({}, opts.resolve, api.resolve);
 
@@ -60,7 +67,7 @@ class SwaggerCombine {
             var parser = new $RefParser();
             this.parsers.push(parser);
             return parser
-              .dereference(api.url, opts)
+              .dereference(api.resolved, opts)
               .then(res => SwaggerParser.dereference(res, opts))
               .catch(err => {
                 if (this.opts.watch) {
