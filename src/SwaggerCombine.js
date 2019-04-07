@@ -38,9 +38,9 @@ class SwaggerCombine {
   }
 
   load() {
-    var parser = new $RefParser();
-    this.parsers.push(parser);
-    return parser
+    this.parser = new $RefParser();
+    this.parsers.push(this.parser);
+    return this.parser
       .dereference(this.config, this.opts)
       .then(configSchema => {
         this.apis = configSchema.apis || [];
@@ -64,9 +64,9 @@ class SwaggerCombine {
               _.set(opts, 'resolve.http.headers.authorization', basicAuth);
             }
 
-            var parser = new $RefParser();
-            this.parsers.push(parser);
-            return parser
+            api.parser = new $RefParser();
+            this.parsers.push(api.parser);
+            return api.parser
               .dereference(api.resolved, opts)
               .then(res => SwaggerParser.dereference(res, opts))
               .catch(err => {

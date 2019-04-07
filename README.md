@@ -111,6 +111,26 @@ $ swagger-combine config.json -f yaml
 $ swagger-combine config.json -o combinedSchema.json -w
 ```
 
+Add a 'watch' key with a list of custom paths to watch.
+
+```json
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Swagger Combine Watch Example",
+    "version": "1.0.0"
+  },
+  "apis": [
+    {
+      "url": "./swagger.json",
+      "watch": [
+        "./icon.png",
+        "./css/"
+      ]
+    }
+  ]
+}
+```
 
 ## Configuration
 

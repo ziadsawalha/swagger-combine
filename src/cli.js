@@ -3,6 +3,7 @@ const fs = require('fs');
 
 const SwaggerCombine = require('./SwaggerCombine');
 const pkg = require('../package.json');
+const url = require('./url');
 
 function CLI(argv) {
   const args = minimist(argv);
@@ -53,6 +54,16 @@ function CLI(argv) {
         combiner.parsers.map(parser => {
           paths = paths.concat(parser.$refs.paths("file"));
         });
+        combiner.apis.map(api => {
+          if (Array.isArray(api.watch)) {
+            api.watch.map(path => {
+              if (url.isFileSystemPath(path)) {
+                paths.push(url.path.resolve(url.resolveRelativePath(config, path)));
+              }
+            });
+          }
+        });
+
         var watch = require('node-watch');
         var watchers = [];
 
@@ -64,8 +75,8 @@ function CLI(argv) {
 
         var distinctFilesToWatch = new Set(paths);
         distinctFilesToWatch.forEach(path => {
-          watchers.push(watch(path, { recursive: false }, fileChangeHandler));
-          console.debug("Watching", path);
+          watchers.push(watch(path, { recursive: true }, fileChangeHandler));
+          // console.debug("Watching", path);
         });
 
         process.stdin.resume();
