@@ -132,6 +132,29 @@ Add a 'watch' key with a list of custom paths to watch.
 }
 ```
 
+#### Live Reload your API in Swagger "Editor"
+
+```sh
+$ swagger-combine config.json -o combinedSchema.json -w --serve
+Watching 7 files
+Serving: combinedSchema.json
+Listening on http://127.0.0.1:8000
+```
+
+and while you edit your source or referenced files:
+
+```text
+Sent updated spec to the browser.
+Sent updated spec to the browser.
+```
+
+This will start a local server and open a browser that will show your
+API in Swagger Editor. Editing in the browser is not supported, but if
+any of your source files change, the browser will refresh. This is
+helpful when debugging and authoring API specs.
+
+>**BUG:** Occasionally the listener for the spec does not work and updates are not resent to the server. Restart the process.
+
 ## Configuration
 
 * **Swagger Combine** requires one configuration schema which resembles a standard Swagger schema except for an additional `apis` field.
@@ -343,7 +366,7 @@ Base path definition in Swagger schemas is ignored by default and the processing
 ### Renaming Paths
 
 Paths can be renamed by specifying the path to rename and the new path name as key/value pairs in `paths.rename`.
-This will replace each key matched by path with the new value. 
+This will replace each key matched by path with the new value.
 
 ```json
 {
@@ -388,11 +411,11 @@ The next example equals the simple example above but used an extended configurat
       "url": "http://petstore.swagger.io/v2/swagger.json",
       "paths": {
         "rename": [
-          { 
+          {
             "type": "rename",
             "from": "/pet/{petId}",
             "to": "/pet/alive/{petId}"
-          } 
+          }
         ]
       }
     },
@@ -417,11 +440,11 @@ To change the basePath of all paths a regular expression can be used.
       "url": "http://petstore.swagger.io/v2/swagger.json",
       "paths": {
         "rename": [
-          { 
+          {
             "type": "regex",
             "from": "^\/pet\/(.*)",
             "to": "/pet/alive/$1"
-          } 
+          }
         ]
       }
     },
@@ -432,7 +455,7 @@ To change the basePath of all paths a regular expression can be used.
 }
 ```
 
-An example of dynamic generated configuration and renamings with regular expressions and functions. 
+An example of dynamic generated configuration and renamings with regular expressions and functions.
 
 ```javascript
 const swaggerJson = {
@@ -446,12 +469,12 @@ const swaggerJson = {
       url: "http://petstore.swagger.io/v2/swagger.json",
       paths: {
         rename: [
-          { 
+          {
             type: "regex",
             from: /\/pet\/(.*)/,
             to: "/pet/alive/$1"
           },
-          { 
+          {
             type: "function",
             to: (path) => path === "/pet/alive/{petId}" ? "/pet/alive/{petAliveId}" : path
           }

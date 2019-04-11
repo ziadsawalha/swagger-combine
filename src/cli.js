@@ -1,9 +1,10 @@
 const minimist = require('minimist');
 const fs = require('fs');
-
+const nodeWatch = require('node-watch');
 const SwaggerCombine = require('./SwaggerCombine');
 const pkg = require('../package.json');
 const url = require('./url');
+const server = require("./serve.js");
 
 function CLI(argv) {
   const args = minimist(argv);
@@ -11,6 +12,10 @@ function CLI(argv) {
   const output = args.output || args.o;
   const format = args.format || args.f;
   const watch = args.watch || args.w;
+  const debug = args.debug;
+  const serve = args.serve;
+  const host = args.host;
+  const port = args.port;
   const opts = {};
 
   if (args.v) {
@@ -20,7 +25,7 @@ function CLI(argv) {
 
   if (args.h) {
     console.info(
-      'Usage: swagger-combine <config> [-o|--output file] [-f|--format <yaml|json>] [--continueOnError] [--continueOnConflictingPaths] [--includeDefinitions] [--skipBeforeRun] [-w|--watch]'
+      'Usage: swagger-combine <config> [-h] [-v] [--debug] [-o|--output file] [-f|--format <yaml|json>] [--continueOnError] [--continueOnConflictingPaths] [--includeDefinitions] [--skipBeforeRun] [-w|--watch] [--serve --host <localhost> --port <8000>]'
     );
     return;
   }
@@ -39,7 +44,6 @@ function CLI(argv) {
   opts.includeDefinitions = !!args.includeDefinitions;
   opts.useBasePath = !!args.useBasePath;
   opts.skipBeforeRun = !!args.skipBeforeRun;
-  opts.watch = watch;
 
   var combiner = new SwaggerCombine(config, opts);
   return combiner
@@ -50,38 +54,55 @@ function CLI(argv) {
       } else {
         console.info(combinedSchema.toString());
       }
-      if (opts.watch) {
+      if (watch) {
         var paths = [];
         combiner.parsers.map(parser => {
           paths = paths.concat(parser.$refs.paths("file"));
         });
         combiner.apis.map(api => {
           if (Array.isArray(api.watch)) {
-            api.watch.map(path => {
-              if (url.isFileSystemPath(path)) {
-                paths.push(url.path.resolve(url.resolveRelativePath(config, path)));
+            api.watch.map(sourceFile => {
+              if (url.isFileSystemPath(sourceFile)) {
+                paths.push(url.path.resolve(url.resolveRelativePath(config, sourceFile)));
               }
             });
           }
         });
 
-        var watch = require('node-watch');
         var watchers = [];
 
         var fileChangeHandler = function onFileChange(evt, name) {
           console.log('%s changed.', name);
           watchers.map(watcher => {watcher.close();});
-          CLI(argv);
+          CLI(argv.filter(arg => {return arg.toLowerCase() != "--serve";}));
         };
 
         var distinctFilesToWatch = new Set(paths);
         distinctFilesToWatch.forEach(path => {
-          watchers.push(watch(path, { recursive: true }, fileChangeHandler));
-          // console.debug("Watching", path);
+          watchers.push(nodeWatch(path, { recursive: true, persistent: false }, fileChangeHandler));
+          if (debug) { console.debug("Watching", path); }
         });
+        console.debug("Watching", distinctFilesToWatch.size , "files");
+
+        if (!serve) {
+          process.stdin.resume();
+        }
+      }
+
+      if (serve === true) {
+        server.start(
+          output,
+          output,
+          port || "8000",
+          host || "127.0.0.1",
+          true,
+          debug
+        );
 
         process.stdin.resume();
+
       }
+
     })
     .catch(error => {
       console.error(error.message)
