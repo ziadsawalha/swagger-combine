@@ -26,6 +26,7 @@ class SwaggerCombine {
       .then(() => this.renamePaths())
       .then(() => this.renameTags())
       .then(() => this.addTags())
+      .then(() => this.mergeTags())
       .then(() => this.renameOperationIds())
       .then(() => this.renameSecurityDefinitions())
       .then(() => this.dereferenceSchemaSecurity())
@@ -323,6 +324,19 @@ class SwaggerCombine {
       return schema;
     });
 
+    return this;
+  }
+
+  mergeTags() {
+    this.schemas.forEach(schema => {
+      if (schema.tags && schema.tags.length > 0) {
+        if (this.combinedSchema.tags && this.combinedSchema.tags.length > 0) {
+          schema.tags.forEach(tag => this.combinedSchema.tags.push(tag))
+        } else {
+          this.combinedSchema.tags = schema.tags
+        }
+      }
+    });
     return this;
   }
 
