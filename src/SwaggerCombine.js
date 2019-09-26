@@ -33,7 +33,8 @@ class SwaggerCombine {
       .then(() => this.addSecurityToPaths())
       .then(() => this.addBasePath())
       .then(() => this.combineSchemas())
-      .then(() => this.removeEmptyFields());
+      .then(() => this.removeEmptyFields())
+      .then(() => this.addSchemaDefinitions());
   }
 
   combineAndReturn() {
@@ -365,6 +366,34 @@ class SwaggerCombine {
       return schema;
     });
 
+    return this;
+  }
+
+  addSchemaDefinitions() {
+    this.schemas.map((s, index) => {
+      var schema = s
+      var combined = this.combinedSchema
+
+      traverse(schema).forEach(function traverseSchema() {
+        if (this.key == 'description' && _.isString(this.node)) {
+          var schemaRef = /<SchemaDefinition schemaRef="(.*)"/g, match
+
+          while (match = schemaRef.exec(this.node)) {
+            // FIXME: The code below shall only be used in a proof of concept
+            var key = match[1].split('/').slice(-1)[0]
+            var value = schema.components.schemas[key]
+
+            if (!combined.components.schemas) {
+              combined.components.schemas = Object()
+            }
+
+            if (!combined.components.schemas[key]) {
+              combined.components.schemas[key] = value
+            }
+          }
+        }
+      })
+    })
     return this;
   }
 
